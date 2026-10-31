@@ -90,7 +90,7 @@ async function loadGenerator(onStatus: (status: OpenModelStatus, progress?: numb
   const { pipeline } = await import("@huggingface/transformers");
   const options = {
     dtype: "q4" as const,
-    progress_callback(progress) {
+    progress_callback(progress: { status: string; progress?: number }) {
       if (progress.status === "progress_total" && typeof progress.progress === "number") {
         onStatus("downloading", Math.min(100, Math.max(0, Math.round(progress.progress))));
       }
