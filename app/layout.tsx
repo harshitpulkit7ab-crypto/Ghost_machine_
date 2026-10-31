@@ -3,9 +3,9 @@ import type { ReactNode } from "react";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Gatherly — Make every gathering feel special",
+  title: "Gatherly — A little ghost for every gathering",
   description:
-    "Your thoughtful AI event planner for weddings, birthdays, and community celebrations. Build a budget, timeline, vendor checklist, and ideas in minutes.",
+    "An open-weight AI event planner that runs in your browser. Build a budget, timeline, vendor checklist, and ideas without an AI API key.",
 };
 
 export default function RootLayout({

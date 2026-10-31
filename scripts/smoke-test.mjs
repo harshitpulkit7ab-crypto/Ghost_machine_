@@ -39,7 +39,7 @@ try {
   const page = await homepage.text();
   assert.equal(homepage.status, 200);
   assert.match(page, /Tell us what you.re celebrating/i);
-  assert.match(page, /ON-DEVICE AI/i);
+  assert.match(page, /OPEN-WEIGHT AI/i);
 
   const scenarios = [
     {

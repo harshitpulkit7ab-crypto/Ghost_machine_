@@ -2,13 +2,13 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import {
-  type BrowserAiAvailability,
-  type BrowserAiStatus,
+  type OpenModelAvailability,
+  type OpenModelStatus,
   type EventType,
   type Plan,
   type PlanRequest,
-  generatePlanWithBrowserAi,
-  getBrowserAiAvailability,
+  generatePlanWithOpenModel,
+  getOpenModelAvailability,
   isPlanResponse,
 } from "@/lib/browser-ai";
 
@@ -131,8 +131,8 @@ export default function Home() {
   const [form, setForm] = useState(initialForm);
   const [plan, setPlan] = useState(samplePlan);
   const [planMode, setPlanMode] = useState<"sample" | "on-device" | "built-in">("sample");
-  const [aiAvailability, setAiAvailability] = useState<BrowserAiAvailability>("unavailable");
-  const [aiStatus, setAiStatus] = useState<BrowserAiStatus | null>(null);
+  const [aiAvailability, setAiAvailability] = useState<OpenModelAvailability>("downloadable");
+  const [aiStatus, setAiStatus] = useState<OpenModelStatus | null>(null);
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [checked, setChecked] = useState<string[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -140,17 +140,7 @@ export default function Home() {
   const [aiNotice, setAiNotice] = useState("");
 
   useEffect(() => {
-    let active = true;
-    getBrowserAiAvailability()
-      .then((availability) => {
-        if (active) setAiAvailability(availability);
-      })
-      .catch(() => {
-        if (active) setAiAvailability("unavailable");
-      });
-    return () => {
-      active = false;
-    };
+    setAiAvailability(getOpenModelAvailability());
   }, []);
 
   const allocatedBudget = plan.budgetBreakdown.reduce((sum, item) => sum + item.amount, 0);
@@ -170,7 +160,7 @@ export default function Home() {
     setAiStatus("preparing");
     setDownloadProgress(0);
     try {
-      const generatedPlan = await generatePlanWithBrowserAi(form, (status, progress) => {
+      const generatedPlan = await generatePlanWithOpenModel(form, (status, progress) => {
         setAiStatus(status);
         if (typeof progress === "number") setDownloadProgress(progress);
       });
@@ -179,7 +169,7 @@ export default function Home() {
       setChecked([]);
       setAiAvailability("available");
     } catch {
-      setAiNotice("On-device AI couldn’t finish this plan, so the built-in planner created a personalized fallback.");
+      setAiNotice("The open model couldn’t finish this plan. The built-in planner created a fallback using this app’s private planning endpoint.");
       try {
         const response = await fetch("/api/plan", {
           method: "POST",
@@ -195,7 +185,7 @@ export default function Home() {
         setPlan(result.plan);
         setPlanMode(result.mode);
         setChecked([]);
-        setAiAvailability("unavailable");
+        setAiAvailability("downloadable");
       } catch (requestError) {
         setError(
           requestError instanceof Error
@@ -233,12 +223,12 @@ export default function Home() {
 
       <section className="hero">
         <div className="hero-copy">
-          <div className="eyebrow"><span className="eyebrow-dot" /> A little help for a lot of love</div>
-          <h1>Good things happen<br />when we <span>gather.</span></h1>
-          <p>A private, on-device AI planning companion for big days, big birthdays, and bringing your whole neighborhood together.</p>
+          <div className="eyebrow"><span className="eyebrow-dot" /> A ghost with good ideas</div>
+          <h1>A little ghost<br />for every <span>gathering.</span></h1>
+          <p>An open-weight AI planning companion that lives in your browser. Make a budget, build a timeline, and keep your event details off an AI provider’s server.</p>
           <a className="primary-button hero-button" href="#planner">Let’s make a plan <span aria-hidden="true">↓</span></a>
           <div className="hero-note">
-            <span className="privacy-chip"><span aria-hidden="true">✦</span> ON-DEVICE AI · NO API KEY</span>
+            <span className="privacy-chip"><span aria-hidden="true">✦</span> OPEN-WEIGHT AI · NO API KEY</span>
           </div>
         </div>
         <div className="hero-art" aria-label="Illustration of a garden gathering">
@@ -263,7 +253,7 @@ export default function Home() {
       <section className="planner-section" id="planner">
         <div className="section-heading">
           <div><div className="eyebrow">YOUR VERY OWN PLANNING BUDDY</div><h2>Start with the feeling.</h2></div>
-          <p>Your browser’s built-in AI can turn a few details into an occasion that feels like yours. When AI isn’t available, your private built-in planner is ready instead.</p>
+          <p>A small open model turns your details into a plan right in your browser. If it can’t run on your device, the built-in planner is ready instead.</p>
         </div>
 
         <div className="planner-grid">
@@ -274,14 +264,14 @@ export default function Home() {
               <span className="ai-ready-mark" aria-hidden="true">✦</span>
               <span className="ai-ready-copy">
                 <strong>
-                  {aiAvailability === "available" ? "Private AI is ready" :
-                    aiAvailability === "downloadable" || aiAvailability === "downloading" ? "On-device AI is ready to set up" :
+                  {aiAvailability === "available" ? "Your local model is ready" :
+                    aiAvailability === "downloadable" || aiAvailability === "downloading" ? "Open model ready to download" :
                       "Your private planner is ready"}
                 </strong>
                 <span>
-                  {aiAvailability === "available" ? "Your event details stay on this device." :
-                    aiAvailability === "downloadable" || aiAvailability === "downloading" ? "The AI model downloads from Chrome on first use." :
-                      "Personalized plans work in every browser. AI runs in supported Chrome."}
+                  {aiAvailability === "available" ? "The open-weight model runs on this device." :
+                    aiAvailability === "downloadable" || aiAvailability === "downloading" ? "Qwen 2.5 0.5B downloads from Hugging Face on first use." :
+                      "The built-in planner works in every browser; open-model inference needs a modern browser."}
                 </span>
               </span>
               <span className="ai-status-pill">{aiAvailability === "available" ? "AI READY" : "NO KEY NEEDED"}</span>
@@ -330,9 +320,9 @@ export default function Home() {
               {isGenerating ? (
                 <>
                   <span className="spinner" />
-                  {aiStatus === "downloading" ? `Preparing private AI · ${downloadProgress}%` :
-                    aiStatus === "generating" ? "Your on-device AI is planning…" :
-                      "Getting your private planner ready…"}
+                  {aiStatus === "downloading" ? `Loading open model · ${downloadProgress}%` :
+                    aiStatus === "generating" ? "Your local model is planning…" :
+                  "Getting your local model ready…"}
                 </>
               ) : <>Make my plan <span aria-hidden="true">✦</span></>}
             </button>
@@ -341,7 +331,7 @@ export default function Home() {
                 <span style={{ width: `${downloadProgress}%` }} />
               </div>
             )}
-            <p className="privacy-note"><span aria-hidden="true">✿</span> Browser AI stays on-device; the private fallback uses no external AI service.</p>
+            <p className="privacy-note"><span aria-hidden="true">✿</span> Open-model prompts stay on-device. First use downloads public model weights; no API key or AI service is involved.</p>
           </form>
 
           <div className="plan-column" id="your-plan">
@@ -350,7 +340,7 @@ export default function Home() {
               <div className="plan-actions">
                 <button className="download-button" onClick={() => downloadPlan(plan, form)} type="button" aria-label="Download your event plan as a text file">↓ Save plan</button>
                 <span className={`plan-badge ${planMode === "on-device" ? "ai-plan-badge" : ""}`}>
-                  {planMode === "on-device" ? "✦ Made with on-device AI" :
+                  {planMode === "on-device" ? "✦ Made with open-weight AI" :
                     planMode === "built-in" ? "Personalized plan · private" : "Your sample plan"}
                 </span>
               </div>
